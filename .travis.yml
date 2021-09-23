@@ -1,0 +1,24 @@
+sudo: required
+language: generic
+
+services:
+  - docker
+
+before_install:
+  - docker build -t johnvict/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true johnvict/react-test npm test
+
+after_success:
+  - docker build -t johnvict/multi-client ./client
+  - docker build -t johnvict/multi-nginx ./nginx
+  - docker build -t johnvict/multi-server ./server
+  - docker build -t johnvict/multi-worker ./worker
+  # Log in to the docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Take those images and push them to docker hub
+  - docker push johnvict/multi-client
+  - docker push johnvict/multi-nginx
+  - docker push johnvict/multi-server
+  - docker push johnvict/multi-worker
